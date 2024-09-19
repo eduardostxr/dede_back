@@ -13,6 +13,18 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model cliente {
+  id        String   @id @default(uuid()) @db.VarChar(36)
+  nome      String   @db.VarChar(60)
+  email     String   @db.VarChar(60) @unique
+  senha     String   @db.VarChar(60)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  cartas    Carta[]  @relation("ClienteCartas")
+
+  @@map("clientes")
+}
+
 model nacionalidade {
   id     Int     @id @default(autoincrement())
   nome   String  @db.VarChar(30)
@@ -22,26 +34,28 @@ model nacionalidade {
 }
 
 model Carta {
-  id               Int            @id @default(autoincrement())
-  nome             String         @db.VarChar(60)
-  velocidade       Int            @db.TinyInt
-  fisico           Int            @db.TinyInt
-  defesa           Int            @db.TinyInt
-  chute            Int            @db.TinyInt
-  passe            Int            @db.TinyInt
-  drible           Int            @db.TinyInt
-  overall          Int            @db.TinyInt
-  anoNascimento    Int            @db.SmallInt
-  preco            Decimal        @db.Decimal(10, 2)
-  comercio         Boolean        @default(true)
-  foto             String
-  descricao        String?        @db.LongText
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
-  raridade         Raridade
+  id              Int           @id @default(autoincrement())
+  nome            String        @db.VarChar(60)
+  velocidade      Int           @db.TinyInt
+  fisico          Int           @db.TinyInt
+  defesa          Int           @db.TinyInt
+  chute           Int           @db.TinyInt
+  passe           Int           @db.TinyInt
+  drible          Int           @db.TinyInt
+  overall         Int           @db.TinyInt
+  anoNascimento   Int           @db.SmallInt
+  preco           Decimal       @db.Decimal(10, 2)
+  comercio        Boolean       @default(true)
+  foto            String
+  descricao       String?       @db.LongText
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  raridade        Raridade
   nacionalidade   nacionalidade @relation(fields: [nacionalidadeId], references: [id])
   nacionalidadeId Int
-  fotos            Foto[]
+  fotos           Foto[]
+  cliente         cliente?      @relation("ClienteCartas", fields: [clienteId], references: [id])
+  clienteId       String?
 
   @@map("cartas")
 }
