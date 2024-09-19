@@ -1,0 +1,64 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model nacionalidade {
+  id     Int     @id @default(autoincrement())
+  nome   String  @db.VarChar(30)
+  cartas Carta[]
+
+  @@map("nacionalidades")
+}
+
+model Carta {
+  id               Int            @id @default(autoincrement())
+  nome             String         @db.VarChar(60)
+  velocidade       Int            @db.TinyInt
+  fisico           Int            @db.TinyInt
+  defesa           Int            @db.TinyInt
+  chute            Int            @db.TinyInt
+  passe            Int            @db.TinyInt
+  drible           Int            @db.TinyInt
+  overall          Int            @db.TinyInt
+  anoNascimento    Int            @db.SmallInt
+  preco            Decimal        @db.Decimal(10, 2)
+  comercio         Boolean        @default(true)
+  foto             String
+  descricao        String?        @db.LongText
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  raridade         Raridade
+  nacionalidade   nacionalidade @relation(fields: [nacionalidadeId], references: [id])
+  nacionalidadeId Int
+  fotos            Foto[]
+
+  @@map("cartas")
+}
+
+model Foto {
+  id         Int    @id @default(autoincrement())
+  descricao  String @db.VarChar(30)
+  codigoFoto String @db.LongText
+  carta      Carta  @relation(fields: [cartaId], references: [id])
+  cartaId    Int
+
+  @@map("fotos")
+}
+
+enum Raridade {
+  BRONZE
+  PRATA
+  OURO
+  LENDA
+}
