@@ -88,6 +88,7 @@ router.post("/login", async (req, res) => {
   const mensaPadrao = "Login ou senha incorretos"
 
   if (!email || !senha) {
+    // res.status(400).json ({erro: "Informe e-mail e senha do usuário"})
     res.status(400).json({ erro: mensaPadrao })
     return
   }
@@ -113,6 +114,31 @@ router.post("/login", async (req, res) => {
 
       res.status(400).json({ erro: mensaPadrao })
     }
+  } catch (error) {
+    res.status(400).json(error)
+  }
+})
+
+router.get("/:id", async (req, res) => {
+  const { id } = req.params
+
+
+  try {
+    const cliente = await prisma.cliente.findUnique({
+      where: { id }
+    })
+
+    if (cliente == null) {
+      res.status(400).json({ erro: "Não Cadastrado" })
+      
+    } else {
+      res.status(200).json({
+        id: cliente.id,
+        nome: cliente.nome,
+        email: cliente.email
+      })
+    }
+    
   } catch (error) {
     res.status(400).json(error)
   }

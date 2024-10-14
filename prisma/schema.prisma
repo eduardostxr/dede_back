@@ -13,7 +13,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model cliente {
+model Cliente {
   id        String   @id @default(uuid()) @db.VarChar(36)
   nome      String   @db.VarChar(60)
   email     String   @db.VarChar(60) @unique
@@ -21,11 +21,12 @@ model cliente {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   cartas    Carta[]  @relation("ClienteCartas")
+  propostas Proposta[]
 
   @@map("clientes")
 }
 
-model nacionalidade {
+model Nacionalidade {
   id     Int     @id @default(autoincrement())
   nome   String  @db.VarChar(30)
   cartas Carta[]
@@ -51,11 +52,12 @@ model Carta {
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
   raridade        Raridade
-  nacionalidade   nacionalidade @relation(fields: [nacionalidadeId], references: [id])
+  nacionalidade   Nacionalidade @relation(fields: [nacionalidadeId], references: [id])
   nacionalidadeId Int
   fotos           Foto[]
-  cliente         cliente?      @relation("ClienteCartas", fields: [clienteId], references: [id])
+  cliente         Cliente?      @relation("ClienteCartas", fields: [clienteId], references: [id])
   clienteId       String?
+  propostas       Proposta[]
 
   @@map("cartas")
 }
@@ -68,6 +70,20 @@ model Foto {
   cartaId    Int
 
   @@map("fotos")
+}
+
+model Proposta {
+  id         Int          @id @default(autoincrement())
+  cliente    Cliente      @relation(fields: [clienteId], references: [id])
+  clienteId  String       @db.VarChar(36)
+  carta      Carta        @relation(fields: [cartaId], references: [id])
+  cartaId    Int
+  descricao  String       @db.VarChar(255)
+  resposta   String?      @db.VarChar(255)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  @@map("propostas")
 }
 
 enum Raridade {
