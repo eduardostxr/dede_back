@@ -63,6 +63,15 @@ router.post("/", async (req, res) => {
     return
   }
 
+  const repeatedEmail = await prisma.cliente.findUnique({
+    where: { email }
+  })
+
+  if (repeatedEmail) {
+    res.status(400).json({ erro: "Email já cadastrado" })
+    return
+  }
+
   const erros = validaSenha(senha)
   if (erros.length > 0) {
     res.status(400).json({ erro: erros.join("; ") })
@@ -88,7 +97,6 @@ router.post("/login", async (req, res) => {
   const mensaPadrao = "Login ou senha incorretos"
 
   if (!email || !senha) {
-    // res.status(400).json ({erro: "Informe e-mail e senha do usuário"})
     res.status(400).json({ erro: mensaPadrao })
     return
   }
@@ -121,8 +129,6 @@ router.post("/login", async (req, res) => {
 
 router.get("/:id", async (req, res) => {
   const { id } = req.params
-
-
   try {
     const cliente = await prisma.cliente.findUnique({
       where: { id }
@@ -130,7 +136,7 @@ router.get("/:id", async (req, res) => {
 
     if (cliente == null) {
       res.status(400).json({ erro: "Não Cadastrado" })
-      
+
     } else {
       res.status(200).json({
         id: cliente.id,
@@ -138,10 +144,29 @@ router.get("/:id", async (req, res) => {
         email: cliente.email
       })
     }
-    
+
   } catch (error) {
     res.status(400).json(error)
   }
+
+  router.delete("/:id", async (req, res) => {
+    const { id } = req.params
+
+    try {
+
+      const cliente = await prisma.cliente.delete({
+        where: { id },
+      });
+
+      if (!cliente) {
+        return res.status(404).json({ erro: "Cliente não encontrado" });
+      }
+
+      res.status(200).json({ mensagem: "Cliente deletado com sucesso" });
+    } catch (error) {
+      res.status(400).json(error);
+    }
+  });
 })
 
 export default router
