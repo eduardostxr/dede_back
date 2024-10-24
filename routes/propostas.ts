@@ -9,9 +9,10 @@ const router = Router()
 router.get("/", async (req, res) => {
   try {
     const propostas = await prisma.proposta.findMany({
-      include: { 
-        cliente: true, 
-        carta: true}
+      include: {
+        cliente: true,
+        carta: true
+      }
     })
     res.status(200).json(propostas)
   } catch (error) {
@@ -81,27 +82,40 @@ router.patch("/:id", async (req, res) => {
     const proposta = await prisma.proposta.update({
       where: { id: Number(id) },
       data: { resposta }
-      
+
     })
 
     const dados = await prisma.proposta.findUnique({
-      where: { id: Number(id)},
+      where: { id: Number(id) },
       include: {
         cliente: true
       }
     })
 
     enviaEmail(dados?.cliente.nome as string,
-               dados?.cliente.email as string, 
-               dados?.descricao as string, 
-               resposta)
+      dados?.cliente.email as string,
+      dados?.descricao as string,
+      resposta)
 
     res.status(200).json(proposta);
   } catch (error) {
     res.status(400).json(error)
   }
 })
-
+router.get("/:clienteId", async (req, res) => {
+  const { clienteId } = req.params
+  try {
+    const propostas = await prisma.proposta.findMany({
+      where: { clienteId },
+      include: {
+        carta: true
+      }
+    })
+    res.status(200).json(propostas)
+  } catch (error) {
+    res.status(400).json(error)
+  }
+})
 
 
 export default router
