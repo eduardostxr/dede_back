@@ -22,11 +22,11 @@ router.get("/", async (req, res) => {
 })
 
 router.delete("/:id", verificaToken, async (req, res) => {
-  const { id } = req.params; 
+  const { id } = req.params;
 
   try {
     const proposta = await prisma.proposta.findUnique({
-      where: { id: Number(id) }, 
+      where: { id: Number(id) },
     });
 
     if (!proposta) {
@@ -39,7 +39,7 @@ router.delete("/:id", verificaToken, async (req, res) => {
 
     res.status(200).json({ mensagem: "Proposta deletada com sucesso." });
   } catch (error) {
-    res.status(400).json(error); 
+    res.status(400).json(error);
   }
 });
 
@@ -73,77 +73,101 @@ router.put("/:id", async (req, res) => {
 
   try {
     const proposta = await prisma.proposta.update({
-      where: { id: Number(id) }, 
+      where: { id: Number(id) },
       data: {
         ...(descricao !== undefined && { descricao }),
-        ...(resposta !== undefined && { resposta })   
+        ...(resposta !== undefined && { resposta })
       },
     });
 
-    res.status(200).json(proposta); 
+    res.status(200).json(proposta);
   } catch (error) {
-    res.status(400).json(error); 
+    res.status(400).json(error);
   }
 });
 
+async function enviaEmail(nome: string, email: string, descricao: string, resposta: string, res: any) {
 
+  const transporter = nodemailer.createTransport({
+    // port: 465,
+    port: 587,
+    host: "smtp-relay.brevo.com",
+    auth: {
+      user: "7dda03001@smtp-brevo.com",
+      pass: "qsOSGdVazFnHAL69",
+    },
+    secure: true,
+  });
 
-async function enviaEmail(nome: string, email: string, descricao: string, resposta: string) {
-  try {
-    const transporter = nodemailer.createTransport({
-      host: "smtp-relay.brevo.com",
-      port: 587,
-      secure: false,
-      auth: {
-        user: "7dda03001@smtp-brevo.com",
-        pass: "qsOSGdVazFnHAL69",
-      },
+  await new Promise((resolve, reject) => {
+    transporter.verify(function (error, success) {
+      if (error) {
+        console.log(error);
+        reject(error);
+      } else {
+        console.log("Server is ready to take our messages");
+        resolve(success);
+      }
     });
+  });
 
-    await new Promise((resolve, reject) => {
-      transporter.verify((error, success) => {
-        if (error) {
-          console.error("Erro ao verificar conexão:", error);
-          reject(error);
-        } else {
-          console.log("Servidor pronto para enviar emails.");
-          resolve(success);
-        }
-      });
-    });
+  const mailData = {
+    from: {
+      name: `${nome}`,
+      address: "myEmail@gmail.com",
+    },
+    replyTo: email,
+    to: "recipient@gmail.com",
+    subject: `form message`,
+    text: email,
+    html: `<h3>Estimado Cliente: ${nome}</3>
+           <h3>Proposta: ${descricao}</3>
+           <h3>Resposta da Game Legends: ${resposta}</3>
+           <p>Muito obrigado pelo seu contato</p>
+           <p>Game Legends</p>`
+};
 
-    const mailOptions = {
-      from: 'frrmateu@gmail.com',
-      to: email,
-      subject: "Proposta Game Legends",
-      text: resposta,
-      html: `
-        <h3>Estimado Cliente: ${nome}</h3>
-        <h3>Proposta: ${descricao}</h3>
-        <h3>Resposta da Game Legends: ${resposta}</h3>
-        <p>Muito obrigado pelo seu contato</p>
-        <p>Game Legends</p>
-      `,
-    };
+await new Promise((resolve, reject) => {
+  transporter.sendMail(mailData, (err, info) => {
+    if (err) {
+      console.error(err);
+      reject(err);
+    } else {
+      console.log(info);
+      resolve(info);
+    }
+  });
+});
 
-    const info = await new Promise((resolve, reject) => {
-      transporter.sendMail(mailOptions, (err, info) => {
-        if (err) {
-          console.error("Erro ao enviar email:", err);
-          reject(err);
-        } else {
-          console.log("Email enviado com sucesso:", info.messageId);
-          resolve(info);
-        }
-      });
-    });
+res.status(200).json({ status: "OK" });
+};
+// async function enviaEmail(nome: string, email: string, descricao: string, resposta: string) {
 
-    return { status: "OK", info };
-  } catch (error) {
-    console.error("Erro durante o envio do email:", error);
-    throw new Error("Erro ao enviar email. Verifique os detalhes do servidor SMTP ou as credenciais.");
-  }
-}
+//   const transporter = nodemailer.createTransport({
+//     host: "smtp-relay.brevo.com",
+//     port: 587,
+//     secure: false,
+//     auth: {
+//       user: "7dda03001@smtp-brevo.com",
+//       pass: "qsOSGdVazFnHAL69",
+//     },
+//   });
+
+//   const info = await transporter.sendMail({
+//     from: 'frrmateu@gmail.com',
+//     to: email, 
+//     subject: "Proposta Game Legends",
+//     text: resposta,
+//     html: `<h3>Estimado Cliente: ${nome}</3>
+//            <h3>Proposta: ${descricao}</3>
+//            <h3>Resposta da Game Legends: ${resposta}</3>
+//            <p>Muito obrigado pelo seu contato</p>
+//            <p>Game Legends</p>`
+
+//   });
+
+//   console.log("Message sent: %s", info.messageId);
+// }
 
 router.patch("/:id", async (req, res) => {
   const { id } = req.params;
@@ -172,7 +196,8 @@ router.patch("/:id", async (req, res) => {
     enviaEmail(dados?.cliente.nome as string,
       dados?.cliente.email as string,
       dados?.descricao as string,
-      resposta)
+      resposta,
+      res)
 
     res.status(200).json(proposta);
   } catch (error) {
