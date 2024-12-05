@@ -89,31 +89,60 @@ router.put("/:id", async (req, res) => {
 
 
 async function enviaEmail(nome: string, email: string, descricao: string, resposta: string) {
+  try {
+    const transporter = nodemailer.createTransport({
+      host: "smtp-relay.brevo.com",
+      port: 587,
+      secure: false,
+      auth: {
+        user: "7dda03001@smtp-brevo.com",
+        pass: "qsOSGdVazFnHAL69",
+      },
+    });
 
-  const transporter = nodemailer.createTransport({
-    host: "smtp-relay.brevo.com",
-    port: 587,
-    secure: false,
-    auth: {
-      user: "7dda03001@smtp-brevo.com",
-      pass: "qsOSGdVazFnHAL69",
-    },
-  });
+    await new Promise((resolve, reject) => {
+      transporter.verify((error, success) => {
+        if (error) {
+          console.error("Erro ao verificar conexão:", error);
+          reject(error);
+        } else {
+          console.log("Servidor pronto para enviar emails.");
+          resolve(success);
+        }
+      });
+    });
 
-  const info = await transporter.sendMail({
-    from: 'frrmateu@gmail.com',
-    to: email, 
-    subject: "Proposta Game Legends",
-    text: resposta,
-    html: `<h3>Estimado Cliente: ${nome}</3>
-           <h3>Proposta: ${descricao}</3>
-           <h3>Resposta da Game Legends: ${resposta}</3>
-           <p>Muito obrigado pelo seu contato</p>
-           <p>Game Legends</p>`
+    const mailOptions = {
+      from: 'frrmateu@gmail.com',
+      to: email,
+      subject: "Proposta Game Legends",
+      text: resposta,
+      html: `
+        <h3>Estimado Cliente: ${nome}</h3>
+        <h3>Proposta: ${descricao}</h3>
+        <h3>Resposta da Game Legends: ${resposta}</h3>
+        <p>Muito obrigado pelo seu contato</p>
+        <p>Game Legends</p>
+      `,
+    };
 
-  });
+    const info = await new Promise((resolve, reject) => {
+      transporter.sendMail(mailOptions, (err, info) => {
+        if (err) {
+          console.error("Erro ao enviar email:", err);
+          reject(err);
+        } else {
+          console.log("Email enviado com sucesso:", info.messageId);
+          resolve(info);
+        }
+      });
+    });
 
-  console.log("Message sent: %s", info.messageId);
+    return { status: "OK", info };
+  } catch (error) {
+    console.error("Erro durante o envio do email:", error);
+    throw new Error("Erro ao enviar email. Verifique os detalhes do servidor SMTP ou as credenciais.");
+  }
 }
 
 router.patch("/:id", async (req, res) => {
