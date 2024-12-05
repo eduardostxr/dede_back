@@ -127,6 +127,45 @@ router.post("/login", async (req, res) => {
   }
 })
 
+router.put("/:id", async (req, res) => {
+  const { id } = req.params;
+  const { nome, email } = req.body;
+
+  if (!nome && !email) {
+    return res.status(400).json({ erro: "Informe nome ou email para atualizar" });
+  }
+
+  try {
+    const cliente = await prisma.cliente.findUnique({
+      where: { id },
+    });
+
+    if (!cliente) {
+      return res.status(404).json({ erro: "Cliente não encontrado" });
+    }
+
+    if (email) {
+      const emailExistente = await prisma.cliente.findUnique({
+        where: { email },
+      });
+
+      if (emailExistente && emailExistente.id !== id) {
+        return res.status(400).json({ erro: "Email já está em uso" });
+      }
+    }
+
+    const clienteAtualizado = await prisma.cliente.update({
+      where: { id },
+      data: { nome, email },
+    });
+
+    res.status(200).json(clienteAtualizado);
+  } catch (error) {
+    res.status(400).json(error);
+  }
+});
+
+
 router.get("/:id", async (req, res) => {
   const { id } = req.params
   try {

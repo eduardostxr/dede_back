@@ -1,6 +1,7 @@
 import { PrismaClient } from "@prisma/client"
 import { Router } from "express"
 import nodemailer from "nodemailer";
+import { verificaToken } from "../middewares/verificaToken";
 
 
 const prisma = new PrismaClient()
@@ -19,6 +20,29 @@ router.get("/", async (req, res) => {
     res.status(400).json(error)
   }
 })
+
+router.delete("/:id", verificaToken, async (req, res) => {
+  const { id } = req.params; 
+
+  try {
+    const proposta = await prisma.proposta.findUnique({
+      where: { id: Number(id) }, 
+    });
+
+    if (!proposta) {
+      return res.status(404).json({ erro: "Proposta não encontrada." });
+    }
+
+    await prisma.proposta.delete({
+      where: { id: Number(id) },
+    });
+
+    res.status(200).json({ mensagem: "Proposta deletada com sucesso." });
+  } catch (error) {
+    res.status(400).json(error); 
+  }
+});
+
 
 
 router.post("/", async (req, res) => {
@@ -40,12 +64,36 @@ router.post("/", async (req, res) => {
   }
 })
 
+router.put("/:id", async (req, res) => {
+  const { id } = req.params;
+  const { descricao, resposta } = req.body;
+  if (descricao === undefined && resposta === undefined) {
+    return res.status(400).json({ erro: "Informe pelo menos um campo para atualizar." });
+  }
+
+  try {
+    const proposta = await prisma.proposta.update({
+      where: { id: Number(id) }, 
+      data: {
+        ...(descricao !== undefined && { descricao }),
+        ...(resposta !== undefined && { resposta })   
+      },
+    });
+
+    res.status(200).json(proposta); 
+  } catch (error) {
+    res.status(400).json(error); 
+  }
+});
+
+
+
 async function enviaEmail(nome: string, email: string, descricao: string, resposta: string) {
 
   const transporter = nodemailer.createTransport({
     host: "smtp-relay.brevo.com",
     port: 587,
-    secure: false, // true for port 465, false for other ports
+    secure: false,
     auth: {
       user: "7dda03001@smtp-brevo.com",
       pass: "qsOSGdVazFnHAL69",
@@ -53,10 +101,10 @@ async function enviaEmail(nome: string, email: string, descricao: string, respos
   });
 
   const info = await transporter.sendMail({
-    from: 'frrmateu@gmail.com', // sender address
-    to: email, // list of receivers
-    subject: "Proposta Game Legends", // Subject line
-    text: resposta, // plain text body
+    from: 'frrmateu@gmail.com',
+    to: email, 
+    subject: "Proposta Game Legends",
+    text: resposta,
     html: `<h3>Estimado Cliente: ${nome}</3>
            <h3>Proposta: ${descricao}</3>
            <h3>Resposta da Game Legends: ${resposta}</3>
@@ -102,6 +150,7 @@ router.patch("/:id", async (req, res) => {
     res.status(400).json(error)
   }
 })
+
 router.get("/:clienteId", async (req, res) => {
   const { clienteId } = req.params
   try {

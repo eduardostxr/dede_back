@@ -9,18 +9,18 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 model Cliente {
-  id        String   @id @default(uuid()) @db.VarChar(36)
-  nome      String   @db.VarChar(60)
-  email     String   @db.VarChar(60) @unique
-  senha     String   @db.VarChar(60)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  cartas    Carta[]  @relation("ClienteCartas")
+  id        String     @id @default(uuid()) @db.VarChar(36)
+  nome      String     @db.VarChar(60)
+  email     String     @unique @db.VarChar(60)
+  senha     String     @db.VarChar(60)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  cartas    Carta[]    @relation("ClienteCartas")
   propostas Proposta[]
 
   @@map("clientes")
@@ -37,18 +37,19 @@ model Nacionalidade {
 model Carta {
   id              Int           @id @default(autoincrement())
   nome            String        @db.VarChar(60)
-  velocidade      Int           @db.TinyInt
-  fisico          Int           @db.TinyInt
-  defesa          Int           @db.TinyInt
-  chute           Int           @db.TinyInt
-  passe           Int           @db.TinyInt
-  drible          Int           @db.TinyInt
-  overall         Int           @db.TinyInt
+  velocidade      Int           @db.SmallInt
+  fisico          Int           @db.SmallInt
+  defesa          Int           @db.SmallInt
+  chute           Int           @db.SmallInt
+  passe           Int           @db.SmallInt
+  drible          Int           @db.SmallInt
+  overall         Int           @db.SmallInt
   anoNascimento   Int           @db.SmallInt
+  destaque        Boolean       @default(true)
   preco           Decimal       @db.Decimal(10, 2)
   comercio        Boolean       @default(true)
   foto            String
-  descricao       String?       @db.LongText
+  descricao       String?       @db.Text
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
   raridade        Raridade
@@ -58,6 +59,8 @@ model Carta {
   cliente         Cliente?      @relation("ClienteCartas", fields: [clienteId], references: [id])
   clienteId       String?
   propostas       Proposta[]
+  admin           Admin         @relation(fields: [adminId], references: [id])
+  adminId         Int           @default(1)
 
   @@map("cartas")
 }
@@ -65,7 +68,7 @@ model Carta {
 model Foto {
   id         Int    @id @default(autoincrement())
   descricao  String @db.VarChar(30)
-  codigoFoto String @db.LongText
+  codigoFoto String @db.Text
   carta      Carta  @relation(fields: [cartaId], references: [id])
   cartaId    Int
 
@@ -73,17 +76,29 @@ model Foto {
 }
 
 model Proposta {
-  id         Int          @id @default(autoincrement())
-  cliente    Cliente      @relation(fields: [clienteId], references: [id])
-  clienteId  String       @db.VarChar(36)
-  carta      Carta        @relation(fields: [cartaId], references: [id])
-  cartaId    Int
-  descricao  String       @db.VarChar(255)
-  resposta   String?      @db.VarChar(255)
-  createdAt  DateTime     @default(now())
-  updatedAt  DateTime     @updatedAt
+  id        Int      @id @default(autoincrement())
+  cliente   Cliente  @relation(fields: [clienteId], references: [id])
+  clienteId String   @db.VarChar(36)
+  carta     Carta    @relation(fields: [cartaId], references: [id])
+  cartaId   Int
+  descricao String   @db.VarChar(255)
+  resposta  String?  @db.VarChar(255)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("propostas")
+}
+
+model Admin {
+  id        Int      @id @default(autoincrement())
+  nome      String   @db.VarChar(60)
+  email     String   @unique @db.VarChar(60)
+  senha     String   @db.VarChar(60)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  cartas    Carta[]
+
+  @@map("admins")
 }
 
 enum Raridade {

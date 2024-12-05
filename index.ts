@@ -6,6 +6,8 @@ import cartasRoutes from './routes/cartas'
 import fotosRoutes from './routes/fotos'
 import clientesRoutes from './routes/clientes'
 import propostasRoutes from './routes/propostas'
+import adminsRoutes from './routes/admins'
+import dashboardRoutes from './routes/dashboard'
 
 const app = express()
 const port = 3004
@@ -19,6 +21,8 @@ app.use("/cartas", cartasRoutes)
 app.use("/fotos", fotosRoutes)
 app.use("/clientes", clientesRoutes)
 app.use("/propostas", propostasRoutes)
+app.use("/admins", adminsRoutes)
+app.use("/dashboard", dashboardRoutes)
 
 app.get('/', (req, res) => {
   res.send('API: Sistema de controle de Cartas')
